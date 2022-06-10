@@ -9,8 +9,4 @@
     <PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="ProgrammingParadigms\" />
-  </ItemGroup>
-
 </Project>

@@ -83,9 +83,9 @@ namespace Monad.PushMaybe
 
 
 
-    // This is teh main interface used by the monad
+    // This is the main interface used by the monad
     // This interface is implemented by any data destination class
-    public interface IPushMaybe<T>
+    public interface IMaybe<T>
     {
         void NoValue();
         void Value(T value);
@@ -96,7 +96,7 @@ namespace Monad.PushMaybe
     // It is only needed to support the Bind function
     public interface ISubscribeMaybe<T>
     {
-        void Subscribe(IPushMaybe<T> subscriber);
+        void Subscribe(IMaybe<T> subscriber);
     }
 
 
@@ -105,15 +105,15 @@ namespace Monad.PushMaybe
 
     // extension methods for the PushMonad
 
-    public static class PushMaybeMonadExtensionMethods
+    public static class MaybeExtensionMethods
     {
         public static ISubscribeMaybe<T> ToMaybe<T>(this T value)
         {
-            return new ValueToMaybe<T>(value);
+            return new ToMaybe<T>(value);
         }
 
 
-        public static ISubscribeMaybe<U> Bind<T, U>(this ISubscribeMaybe<T> source, Action<T, IPushMaybe<U>> action)
+        public static ISubscribeMaybe<U> Bind<T, U>(this ISubscribeMaybe<T> source, Action<T, IMaybe<U>> action)
         {
             var maybe = new Maybe<T, U>(action);
             source.Subscribe(maybe);   // subscribes the IPushMaybe<T> interface of the object
@@ -123,7 +123,7 @@ namespace Monad.PushMaybe
 
         public static void ToValue<T>(this ISubscribeMaybe<T> source, Action<T> valueAction, Action noValueAction)
         {
-            source.Subscribe(new MaybeToValue<T>(valueAction, noValueAction));
+            source.Subscribe(new ToValue<T>(valueAction, noValueAction));
         }
 
     }
@@ -147,26 +147,26 @@ namespace Monad.PushMaybe
     // The class used for this object is internal to this PushMaybe class and is called ActionReceiver.
     // Once you understand all this, this class should be quite straightforward to follow.
 
-    class Maybe<T,U> : IPushMaybe<T>, ISubscribeMaybe<U>
+    class Maybe<T,U> : IMaybe<T>, ISubscribeMaybe<U>
     {
         // implement the constructor, which receives the Action function
-        Action<T, IPushMaybe<U>> action;
-        public Maybe(Action<T, IPushMaybe<U>> action) { this.action = action; }
+        private Action<T, IMaybe<U>> action;
+        public Maybe(Action<T, IMaybe<U>> action) { this.action = action; }
 
 
 
     
         // impolement the ISubscribeMaaybe interface
-        List<IPushMaybe<U>> subscribers = new List<IPushMaybe<U>>();
-        void ISubscribeMaybe<U>.Subscribe(IPushMaybe<U> subscriber)
+        private List<IMaybe<U>> subscribers = new List<IMaybe<U>>();
+        void ISubscribeMaybe<U>.Subscribe(IMaybe<U> subscriber)
         {
             subscribers.Add(subscriber);
         }
 
 
 
-        // Implement the IPushMaybe interface
-        void IPushMaybe<T>.NoValue()
+        // Implement the IMaybe interface
+        void IMaybe<T>.NoValue()
         {
             // Don't even call the Action, just pass the NoValue straight through to the subscribers
             foreach (var subscriber in subscribers)
@@ -176,26 +176,26 @@ namespace Monad.PushMaybe
         }
 
 
-        void IPushMaybe<T>.Value(T value)
+        void IMaybe<T>.Value(T value)
         {
             // Weve been give a value
             // Call the action, giving the value and an interface for it to output its result
-            // For the interface we need to provide an object implementing the IPushMaybe Interface
+            // For the interface we need to provide an object implementing the IMaybe Interface
             action(value, new ActionReceiver<T,U>(this));
         }
 
 
-        // This class is used to create an object implementing the IPushMaybe interface to receive the output from the action.
-        private class ActionReceiver<T,U> : IPushMaybe<U>
+        // This class is used to create an object implementing the IMaybe interface to receive the output from the action.
+        private class ActionReceiver<T,U> : IMaybe<U>
         {
             // First we need to keep a reference to the outer object because we need to access the subscribers
-            Maybe<T, U> outer;
+            private Maybe<T, U> outer;
             public ActionReceiver(Maybe<T, U> outer) { this.outer = outer; }
 
 
 
             // Implement the Ipushmaybe interface
-            void IPushMaybe<U>.NoValue()
+            void IMaybe<U>.NoValue()
             {
                 foreach (var subscriber in outer.subscribers)
                 {
@@ -203,7 +203,7 @@ namespace Monad.PushMaybe
                 }
             }
 
-            void IPushMaybe<U>.Value(U value)
+            void IMaybe<U>.Value(U value)
             {
                 foreach (var subscriber in outer.subscribers)
                 {
@@ -216,12 +216,18 @@ namespace Monad.PushMaybe
 
 
 
-    class ValueToMaybe<T> : ISubscribeMaybe<T>
+    class ToMaybe<T> : ISubscribeMaybe<T>
     {
-        T value;
-        List<IPushMaybe<T>> subscribers = new List<IPushMaybe<T>>();
+        private T value;
+        public ToMaybe(T value) { this.value = value; }
 
-        public ValueToMaybe(T value) { this.value = value; }
+
+
+        private List<IMaybe<T>> subscribers = new List<IMaybe<T>>();
+        void ISubscribeMaybe<T>.Subscribe(IMaybe<T> subscriber)
+        {
+            subscribers.Add(subscriber);
+        }
 
 
 
@@ -232,31 +238,24 @@ namespace Monad.PushMaybe
                 subscriber.Value(value);
             }
         }
-
-
-
-        void ISubscribeMaybe<T>.Subscribe(IPushMaybe<T> subscriber)
-        {
-            subscribers.Add(subscriber);
-        }
     }
 
 
 
-    class MaybeToValue<T> : IPushMaybe<T>
+    class ToValue<T> : IMaybe<T>
     {
-        Action<T> valueAction;
-        Action noValueAction;
+        private Action<T> valueAction;
+        private Action noValueAction;
 
-        public MaybeToValue(Action<T> valueAction, Action noValueAction) { this.valueAction = valueAction; this.noValueAction = noValueAction;  }
+        public ToValue(Action<T> valueAction, Action noValueAction) { this.valueAction = valueAction; this.noValueAction = noValueAction;  }
 
 
-        void IPushMaybe<T>.NoValue()
+        void IMaybe<T>.NoValue()
         {
              noValueAction();
         }
 
-        void IPushMaybe<T>.Value(T value)
+        void IMaybe<T>.Value(T value)
         {
             valueAction(value);
         }
