@@ -67,8 +67,8 @@
 // #define MinusOneDeferredPullMonad
 // #define MinusOneDeferredPushMonad
 // #define MaybeMonad
-#define MaybeDeferredPullMonad
-// #define MaybeDeferredPushMonad
+// #define MaybeDeferredPullMonad
+#define MaybeDeferredPushMonad
 // #define ALA              // Selects ALA version designed to run identical application layer
 
 #if MinusOneMonad
@@ -131,19 +131,12 @@ namespace Application
 
 
 
-        // The application function composes two functions using the Continuation monad.
-        // The Continuation monad consists of Task<T> plus the Totask extension method plus the Bind extension method (both of which are defined in the programming paradigms layer folder)
-        // First it creates a source Task with the value 1. Then the first function adds 2, then the second function adds a number from the console. 
-        // The thing is, because we are using the Coninuation monad, these two functions are allowed to take as much time as they want (be asynchronous).
-        // To demo that, the first function does a delay, and the second function waits for Console input.
-        // What the monad does is, despite these functions taking time and returning a Task object instead of an immediate result, allows you to compose them as if they were functions that just return a result. You just have to use the Bind function to compose them.
-        // And the function must return Task<U> instead of U.
-        // The monad code in the programming paradigms layer takes care of making everything work by providing two extension methiods, Bind() and ToTask().
-        // There is no blocking of the main thread in this program until it hits the final ReadKey.
-        // Everything runs on a single thread.
+        // The application function starts with the value 42, and composes two functions using the monad, then composes an output function.
+        // The -1 monad uses plain integers as the Monad type and the Bind function.
+        // The maybe monad consists of the IMaybe interface and the Bind function. 
+        // These are defines in the Monad folder. There are three different implementions of each.
+        // First it creates a source with the value 42. Then the first function multiplies by 10 and adds 1, then the second function divides into 1000. 
 
-        // There are two versions - the first version uses async/await. If you are not familiar with async/await then use the second version which uses ContinueWith instead.
-        // Each version has a verbose version that Console.WriteLines stuff to see what is going on.
 
 #if MinusOneMonad
         static void Application()
@@ -228,10 +221,10 @@ namespace Application
 #if MaybeDeferredPushMonad || ALA
 
         // This is the same simple application as above, but uses deferred/push implementation of the Maybe monad.
-        // Note that in this push version of the monad, rather than using a lambda expression of the form T -> Interface<U> which takes a T and returns an interface, we instead pass the interface into the lambda expression to use for its output, Action<T, Interface<U>>
-        // This version of the Maybe monad is closer to how ALA works, becasue ALA uses deferred execution, and we like to default to pushing data (like reactive extensions) and only pull when it makes sense to pull.
-
-        delegate void ActionDelegate(IMaybeObserver<int> observer);
+        // Note that in this push version of the monad, rather than using a lambda expression of the form T -> Interface<U> which takes a T and returns an interface,
+        // we instead pass the interface into the lambda expression to use for its output, Action<T, Interface<U>>
+        // This version of the Maybe monad is closer to how ALA works,
+        // becasue ALA uses deferred execution, and in ALA we like to default to pushing data (like reactive extensions) and only pull when it makes sense to pull.
 
         static void Application()
         {
