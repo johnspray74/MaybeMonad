@@ -67,8 +67,8 @@
 // #define MinusOneDeferredPullMonad
 // #define MinusOneDeferredPushMonad
 // #define MaybeMonad
-// #define MaybeDeferredPullMonad
-#define MaybeDeferredPushMonad
+#define MaybeDeferredPullMonad
+// #define MaybeDeferredPushMonad
 // #define ALA              // Selects ALA version designed to run identical application layer
 
 #if MinusOneMonad
