@@ -4,17 +4,20 @@
 // Which one is used depends on two defines: PushMonad and ALA.
 // 1) In the Monad folder in the Monad.Maybe namespace, there is a conventional implementaion using IMaybe. It is immediate, which means the bind function evaluates as it goes.
 
-// 2) In the Monad folder in the Monad.PushMaybe namespace, an implemntation that is deferred. A deferred monad is wired up by the Bind function for runnning later, or for continuous data flow.
+// 2) In the Monad folder in the Monad.PushMaybe namespace, an implemntation that is deferred. A deferred monad is wired up by the Bind function for runnning later,
+//    or for continuous data flow.
 //    This version is needed to compare with ALA, which is always deferred. A deferred dataflow can be either pull or push driven. (similar to IEnumerable and IObservable.)
 //    The one implemented here is a push monad because in ALA we default to pushing type dataflows, and only use pull when it makes more sense).
 //    Note that while we think of monads as composing functions, deferred monads actually consist of a structure built of objects.
-//    The Bind function operates on a left object and creates a right object. If the monad works by pushing the left object has a reference to the right object. Bind then returns the right object ready for the next Bind call.
+//    The Bind function operates on a left object and creates a right object.
+//    If the monad works by pushing, the left object has a reference to the right object. Bind then returns the right object ready for the next Bind call.
 //    The interface Imaybe, is implemented by the right object. This makes sense because data is pushed from left to right through the objects.
-//    Therefore we need an interface that is implemented on the left object for the Bind function to use. This interface is called ISubscribemaybe.
+//    Therefore we need an interface that is implemented on the left object for the Bind function to use. This interface is called ISubscribeMaybe.
 //    The Bind extension method is defined on this interface.
-//    The ISubscribemaybe and IMaybe interfaces are exactly analogous to the IObservable and IObserver interfaces.
+//    The ISubscribeMaybe and IMaybe interfaces are exactly analogous to the IObservable and IObserver interfaces.
 
-// 3) ALA already comes with programming paradigms (which are almost the same thing as monad interfaces, same abstraction level). And ALA is about composing objects (domain abstractions).
+// 3) ALA already comes with programming paradigms (which are almost the same thing as monad interfaces, same abstraction level).
+//    And ALA is about composing objects (domain abstractions).
 //    So it's really easy to implement monad like functionality.
 //    All that is needed is a domain abstraction that's configurable via the constructor with a lambda expression of the type used by the respective monad.
 //    Such a domain abstraction can be simply used like this: .WireIn(new Maybe(lambda expession))
@@ -43,31 +46,61 @@
 //  1) The ALA Bind function uses WireIn whereas the monad Bind function uses the subscribe method on the ISubscribeMaybe interface.
 //  2) The ALA domain abstraction does implements IBinadable (which is an empty interface) instead of iSubscribeMaybe
 
-// If you feel that the pushing version of the monad we have implemented here is not a real monad because the composed functions are not returning an interface, they are of the form Action<T, IMonad<U>, well it's ok, it's just semantics.
-// We could just as easily implement a deferred pull monad which does compose functions of the form I -> IMaybe<U>, and still the ALA and monad implementations would be practically identical.
+// If you feel that the pushing version of the monad we have implemented here is not a real monad because the composed functions are not returning an interface,
+// they are of the form Action<T, IMonad<U>, well it's ok, it's just semantics.
+// We could just as easily implement a deferred pull monad which does compose functions of the form I -> IMaybe<U>,
+// and still the ALA and monad implementations would be practically identical.
 
 // So if ALA and monad can both compose functions, why use ALA?
-// Its becasue ALA can do everything monads can do, but monads can't do everything ALA can do. ALA composes objects. This gives it much greater versatility, for example these objects can have many ports of different programming paradigms,
-// and you can wire them up as an arbitrary graph. ALA is like an electrical circuit built with integrated circuits with many pins. Monads are more like a linear chain of resitor and capacitors.
-// Monads can be thought of as ALA restricted to domain abstractions with one input port and one output port, where these two ports must be the same programming paradigm, and must be dataflows.
-// Monads can have more than one input port, for example when merging two streams of data. Or if they are push style monads like iObservable, they can have more than one output subscriber. But that as far as the topology goes.
+// Its becasue ALA can do everything monads can do, but monads can't do everything ALA can do. ALA composes objects.
+// This gives it much greater versatility, for example these objects can have many ports of different programming paradigms,
+// and you can wire them up as an arbitrary graph. ALA is like an electrical circuit built with integrated circuits with many pins.
+// Monads are more like a linear chain of resitor and capacitors.
+// Monads can be thought of as ALA restricted to domain abstractions with one input port and one output port,
+// where these two ports must be the same programming paradigm, and must be dataflows.
+// Monads do sometimes have more than one input port, for example when merging two streams of data.
+// Or if they are push style monads like iObservable, they can have more than one output subscriber. But that as far as the topology goes.
 
 
 
-// #define PushMonad
-#define ALA              // Selects ALA version designed to run identical application layer
+// #define MinusOneMonad
+// #define MinusOneDeferredPullMonad
+// #define MinusOneDeferredPushMonad
+// #define MaybeMonad
+#define MaybeDeferredPullMonad
+// #define MaybeDeferredPushMonad
+// #define ALA              // Selects ALA version designed to run identical application layer
 
+#if MinusOneMonad
+using Monad.PullMinusOne;
+#endif
+
+#if MinusOneDeferredPullMonad
+using Monad.MinusOneDeferredPull;
+#endif
+
+#if MinusOneDeferredPushMonad
+using Monad.MinusOneDeferredPush;
+#endif
+
+#if MaybeMonad
+using Monad.Maybe;
+#endif
+
+#if MaybeDeferredPullMonad
+using Monad.MaybeDeferredPull;
+#endif
+
+#if MaybeDeferredPushMonad
+using Monad.MaybeDeferredPush;
+#endif
 
 #if ALA
 using DomainAbstractions;
-#else
-#if PushMonad
-using Monad.PushMaybe;
-#else
-using Monad.Maybe;
 #endif
-#endif
+
 using System;
+using System.Diagnostics;
 
 namespace Application
 {
@@ -84,9 +117,9 @@ namespace Application
         {
             try
             {
-                Console.WriteLine("The application has started");
+                Debug.WriteLine("The application has started");
                 Application();
-                Console.WriteLine("The application has finished");
+                Debug.WriteLine("The application has finished");
                 return 0;
             }
             catch (Exception ex)
@@ -112,48 +145,112 @@ namespace Application
         // There are two versions - the first version uses async/await. If you are not familiar with async/await then use the second version which uses ContinueWith instead.
         // Each version has a verbose version that Console.WriteLines stuff to see what is going on.
 
-#if !PushMonad && !ALA
+#if MinusOneMonad
+        static void Application()
+        {
+            var result = 42
+            .Bind(x => x*10 + 1)
+            .Bind(x => x==0? -1 : 1000 / x);
+            Console.WriteLine($"Final result is {result}.");
+        }
+
+#endif
 
 
+
+#if MinusOneDeferredPullMonad
+
+        static void Application()
+        {
+            var combinedFunction = 42.ToFunc()
+            .Bind(x => x * 10 + 1)
+            .Bind(x => x==0? -1 : 1000 / x);
+            
+            int result = combinedFunction();
+            Console.WriteLine($"Final result is {result}.");
+        }
+
+
+#endif
+
+
+
+#if MinusOneDeferredPushMonad
+
+        static void Application()
+        {
+            var program = (MinusOneStart) 42.ToMinusOneMonad();
+            program.Bind(x => x*10 + 1)
+            .Bind(x => x == 0 ? -1 : 1000 / x)
+            .ToOutput(Console.WriteLine);
+            Console.Write($"Final result is ");
+            program.Run();
+        }
+
+
+#endif
+
+#if MaybeMonad
         // This is a simple sample application that uses the typical implemention of maybe Monad.
 
         static void Application()
         {
-            var result = 1.ToMaybe()
-            .Bind(x => new MaybeSomething<int>(x + 2))
-            .Bind<int, double>((x) =>
-             {
-                 if (x == 0) return new MaybeNothing<double>();
-                 else return new MaybeSomething<double>((double)1 / x);
-             });
+            var result = 42.ToMaybe()
+            .Bind(x => new MaybeSomething<int>(x*10 + 1))
+            .Bind<int, double>((x) => x==0 ? new MaybeNothing<double>() : new MaybeSomething<double>((double)1000 / x));
             Console.WriteLine($"Final result is {(result.hasValue ? result.Value : "nothing") }.");
         }
 
-#else // PushMaybe and ALA version
+#endif
+
+
+#if MaybeDeferredPullMonad
+        // This is a deferred or lazy version of the Maybe monad.
+
+        static void Application()
+        {
+            var program = (ToOutput<double>) 42.ToMaybe()
+            .Bind(x => new MaybeSomething<int>(x * 10 + 1))
+            .Bind<int, double>((x) =>
+             {
+                 if (x == 0) return new MaybeNothing<double>();
+                 else return new MaybeSomething<double>((double)1000 / x);
+             })
+            .ToOutput(Console.WriteLine);
+            Console.Write($"Final result is ");
+            program.Run();
+        }
+
+#endif
+
+
+
+#if MaybeDeferredPushMonad || ALA
 
         // This is the same simple application as above, but uses deferred/push implementation of the Maybe monad.
         // Note that in this push version of the monad, rather than using a lambda expression of the form T -> Interface<U> which takes a T and returns an interface, we instead pass the interface into the lambda expression to use for its output, Action<T, Interface<U>>
         // This version of the Maybe monad is closer to how ALA works, becasue ALA uses deferred execution, and we like to default to pushing data (like reactive extensions) and only pull when it makes sense to pull.
 
+        delegate void ActionDelegate(IMaybeObserver<int> observer);
 
         static void Application()
         {
-            var program = 1.ToMaybe();  // Because the monad uses pushing, we keep a reference to the beginning of the chain rather than the end.
-
-            program.Bind<int, int>((x, i) => { i.Value(x + 2); })    // x is the value passed to us. i is the interface we use to push back the result
-            .Bind<int, double>((x, i) =>
-             {
-                 if (x == 0) i.NoValue();
-                 else i.Value((double)1 / x);
-             })
-            .ToValue(
+            var program = (ToMaybe<int>) 42.ToMaybe();  // Because the monad uses pushing, we keep a reference to the beginning of the chain rather than the end.
+            program.Bind<int, int>((x, i) => { i.Value(x*10 + 1); })    // x is the value passed to us. i is the interface we use to push back the result
+            .Bind<int, double>((x, i) => {     // becasue we using a push monad, i is an interface we need to call methods on
+                if (x == 0) i.NoValue(); 
+                else i.Value((double)1000 / x); 
+            })
+            .ToOutput(
                 (x)=>Console.WriteLine($"Final result is {x}."),            // This runs if the source produces a value
                 ()=>Console.WriteLine($"Final result is {"nothing"}.")      // This runs if the source produces a noValue
                 );
 
-            ((ToMaybe<int>)program).Run();   // program is a ISubscribeMaybe (if the PushMonad version), or an object (if the ALA version), so in both cases we need to cast back to ToMaybe so we can call its Run method 
+            program.Run();   // program is a ISubscribeMaybe (if the PushMonad version), or an IBindable (if the ALA version), so in both cases we need to cast back to ToMaybe so we can call its Run method 
         }
 #endif
+
+
 
 
     }

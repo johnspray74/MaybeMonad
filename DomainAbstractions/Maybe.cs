@@ -7,25 +7,22 @@ using System.Collections.Generic;
 
 namespace DomainAbstractions
 {
-    public static class MaybeExtensionMethods
+    public static class ExtensionMethods
     {
         public static IBindable<T> ToMaybe<T>(this T value)
         {
             return new ToMaybe<T>(value);
         }
 
-
         public static IBindable<U> Bind<T, U>(this IBindable<T> source, Action<T, IMaybe<U>> action)
         {
             return (IBindable<U>)source.WireIn(new Maybe<T, U>(action));
         }
 
-
-        public static void ToValue<T>(this IBindable<T> source, Action<T> valueAction, Action noValueAction)
+        public static void ToOutput<T>(this IBindable<T> source, Action<T> valueAction, Action noValueAction)
         {
-            source.WireTo(new ToValue<T>(valueAction, noValueAction));
+            source.WireTo(new ToOutput<T>(valueAction, noValueAction));
         }
-
     }
 
 
