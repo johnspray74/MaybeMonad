@@ -3,12 +3,6 @@
 
 namespace Monad.MinusOneDeferredPull
 {
-    public interface IMinusOne
-    {
-        int Pull();
-    }
-
-
     public static class ExtensionMethod
     {
         public static Func<int> ToFunc(this int source)

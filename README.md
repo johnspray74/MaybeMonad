@@ -17,9 +17,12 @@
 
 # About the project
 
-Demo code of a Maybe monad and equivalent ALA functionality in C#. Code used for online book at abstractionlayeredarchitecture.com 
+Demo code of a Maybe monad and equivalent ALA functionality in C#. Code used for online book at <http://www.abstractionlayeredarchitecture.com> 
 
-The purpose of this project is example code to compare monads and ALA ([Abstraction Layered Architecture](AbstractionLayeredArchitecture.md)).
+The purpose of this project is example code to compare monads and ALA ([Abstraction Layered Architecture](AbstractionLayeredArchitecture.md)) and also to help explain monads in terms of code.
+The is code for both a Maybe monad and a "-1 monad" (based on C/C++ convnetion of returning -1 to represeent no value).
+Both the MinusOne monad and the Maybe moand have three implementation: immediate, deferred/pull and deferred/push.
+Refer to the ALA website chapter six for a full explanation of the differences between these three versons.
 
 It's not intended as a useful implementation of a Maybe monad.
 It's to show how monads work with actual code, and compare that with the actual code of ALA.
@@ -30,9 +33,10 @@ We also provide a Bind function in the ALA version to make the application code 
 Monads are a two-layer pattern. The monad implementaion is in the Monad folder, and the application is in the Application folder.
 ALA is a 4 layer pattern so the implementation is in the Domain Abstractions, Programming Paradigms and Foundation folders, and the application is again in the Application folder.
 
-This example is one of a set of examples implementing different types of monads. Others are Continuation, IObservable, IEnumerable. and State monads.
+This example is one of a set of examples implementing different types of monads. Others are Continuation and IEnumerable (which also includesan IObservable version).
 
-In this example application, the composed functions just add or do a reciprocal of numbers. Because we are demonstrating the Maybe, the one doing reciprocal checks for divide by zero. 
+In this example application, the composed functions just are just simple function that add or do a reciprocal of numbers.
+Because we are demonstrating the Maybe, the one doing reciprocal checks for divide by zero. 
 
 If you don't understand monads, the section in chapter six of the online book fully explains them (I think in a better way than other explanations).
 It wasn't until I implemented them myself with this set of examples (for the purpose of comparing what they do and how they work with ALA) that

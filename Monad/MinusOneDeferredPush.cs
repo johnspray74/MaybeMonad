@@ -2,14 +2,14 @@
 
 namespace Monad.MinusOneDeferredPush
 {
+    public interface IMinusOneObservable
+    {
+        void Wire(IMinusOneObserver onserver);
+    }
+
     public interface IMinusOneObserver
     {
         void Push(int value);
-    }
-
-    public interface IMinusOne
-    {
-        void Wire(IMinusOneObserver onserver);
     }
 
 
@@ -17,17 +17,17 @@ namespace Monad.MinusOneDeferredPush
 
     public static class ExtensionMethod
     {
-        public static IMinusOne ToMinusOneMonad(this int value)
+        public static IMinusOneObservable ToMinusOneMonad(this int value)
         {
             return new MinusOneStart(value);
         }
 
-        public static IMinusOne Bind(this IMinusOne source, Func<int, int> function)
+        public static IMinusOneObservable Bind(this IMinusOneObservable source, Func<int, int> function)
         {
             return new MinusOne(source, function);
         }
 
-        public static void ToOutput(this IMinusOne source, Action<int> action)
+        public static void ToOutput(this IMinusOneObservable source, Action<int> action)
         {
             new MinusOneOutput(source, action);
         }
@@ -39,7 +39,7 @@ namespace Monad.MinusOneDeferredPush
     class MinusOneOutput : IMinusOneObserver
     {
         private Action<int> action;
-        public MinusOneOutput(IMinusOne source, Action<int> action)
+        public MinusOneOutput(IMinusOneObservable source, Action<int> action)
         {
             this.action = action;
             source.Wire(this);
@@ -55,13 +55,13 @@ namespace Monad.MinusOneDeferredPush
 
 
 
-    class MinusOne : IMinusOne, IMinusOneObserver
+    class MinusOne : IMinusOneObservable, IMinusOneObserver
     {
         private IMinusOneObserver observer;
 
         private Func<int, int> function;
 
-        public MinusOne(IMinusOne source, Func<int, int> function)
+        public MinusOne(IMinusOneObservable source, Func<int, int> function)
         {
             source.Wire(this);
             this.function = function;
@@ -79,7 +79,7 @@ namespace Monad.MinusOneDeferredPush
             }
         }
 
-        void IMinusOne.Wire(IMinusOneObserver observer)
+        void IMinusOneObservable.Wire(IMinusOneObserver observer)
         {
             this.observer = observer;
         }
@@ -88,7 +88,7 @@ namespace Monad.MinusOneDeferredPush
 
 
 
-    class MinusOneStart : IMinusOne
+    class MinusOneStart : IMinusOneObservable
     {
         private int value;
         private IMinusOneObserver observer;
@@ -96,7 +96,7 @@ namespace Monad.MinusOneDeferredPush
 
         public MinusOneStart(int value) { this.value = value; }
 
-        void IMinusOne.Wire(IMinusOneObserver observer)
+        void IMinusOneObservable.Wire(IMinusOneObserver observer)
         {
             this.observer = observer;
         }
